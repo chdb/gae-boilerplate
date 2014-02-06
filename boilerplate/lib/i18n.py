@@ -91,6 +91,14 @@ def set_locale(cls, force=None):
     force: a locale to force set (ie 'en_US')
     return: locale as string or None if i18n should be disabled
     """
+ 
+    #ToDo: save the language tag in the User Model and access it below, before cookies.
+    # So a logged-in user consistently get his preferred language.
+    #(otherwise they get the choice of whoever last used the same browser)
+    # Also whenever logged-on user changes the display language, 
+    # she needs to be given a choice "do you want to set this as your preferred language ?"
+    # Also preferred language should be on registration form defaulting to current language.
+    
     locales = cls.app.config.get('locales')
     # disable i18n if config.locales array is empty or None
     if not locales:
