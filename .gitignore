@@ -38,3 +38,6 @@ Vagrantfile
 
 # node stuff
 node_modules
+
+#back-ups
+*.bak
