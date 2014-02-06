@@ -3,7 +3,7 @@
 # standard library imports
 import logging
 import re
-import pytz
+import pytz #@UnresolvedImport
 # related third party imports
 import webapp2
 from webapp2_extras import jinja2
@@ -12,9 +12,10 @@ from webapp2_extras import sessions
 # local application/library specific imports
 from boilerplate import models
 from boilerplate.lib import utils, i18n
-from babel import Locale
+from babel import Locale #@UnresolvedImport
 
-
+from google.appengine.api import memcache
+ 
 def generate_csrf_token():
     session = sessions.get_store().get_session()
     if '_csrf_token' not in session:
@@ -55,6 +56,37 @@ class ViewClass:
     """
     pass
 
+class LocaleStrings (object):
+    """ _s.id      The current locale tag in a form such as: 'en' or 'fr_CA'.
+        _s.this    The current locale as a display string.
+        _s.others  A list of display-string-lists (dsl) for a given curremt locale
+                   One dsl for each locale supported by the app, except the current locale.
+                       eg if current locale is Spanish 'es', a dsl fields could be:
+                                locale id,  locale in current locale,  localized locale ie its own
+                                ['en'    , 'Ingles'                 , 'English'                ]   
+                             or ['en_US' , 'Ingles (Estados Unidos)', 'English (United States)']
+    """        
+    def __init__(_s, handler):     # @NoSelf
+        ctag = handler.locale      # current locale as a string in form: 'aa' or 'aa_AA'  eg: 'en' or 'fr_CA'
+        _s.tag = ctag
+        _s.others = [] 
+        for t in handler.app.config.get ('locales'):
+            loc = Locale.parse (t)
+            if t == ctag:                                                            
+                _s.this = loc.display_name
+            else:
+                _s.others.append( [ t                           # loc described using its tag
+                                  , loc.get_display_name (ctag) # loc described using the current locale
+                                  , loc.display_name            # loc described using the its own locale aka the "localized" locale
+                                  ] ) 
+            
+def getLocaleStrings (handler):
+    ctag = handler.locale
+    ls = memcache.get (ctag)     # requests from a user will generally have same locale so it makes sense to hold this in memcache @UndefinedVariable
+    if ls is None:               # ... and even more so because also many different users will use same locale (memcache is global to the app)
+        ls = LocaleStrings (handler)
+        memcache.add (ctag, ls)  # @UndefinedVariable
+    return ls
 
 class BaseHandler(webapp2.RequestHandler):
     """
@@ -212,7 +244,8 @@ class BaseHandler(webapp2.RequestHandler):
             localized_locale_name = Locale.parse(l).display_name.capitalize()
             locales[l] = language.capitalize() + " (" + territory.capitalize() + ") - " + localized_locale_name
         return locales
-
+        
+        
     @webapp2.cached_property
     def tz(self):
         tz = [(tz, tz.replace('_', ' ')) for tz in pytz.all_timezones]
@@ -304,6 +337,7 @@ class BaseHandler(webapp2.RequestHandler):
             'locale_language': language.capitalize() + " (" + territory.capitalize() + ")", # babel locale object
             'locale_language_id': language_id, # babel locale object
             'locales': self.locales,
+            'locale_strings': getLocaleStrings(self),
             'provider_uris': self.provider_uris,
             'provider_info': self.provider_info,
             'enable_federated_login': self.app.config.get('enable_federated_login'),
@@ -317,3 +351,4 @@ class BaseHandler(webapp2.RequestHandler):
 
         self.response.headers.add_header('X-UA-Compatible', 'IE=Edge,chrome=1')
         self.response.write(self.jinja2.render_template(filename, **kwargs))
+        
