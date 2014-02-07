@@ -14,7 +14,6 @@ from boilerplate import models
 from boilerplate.lib import utils, i18n
 from babel import Locale #@UnresolvedImport
 
-from google.appengine.api import memcache
  
 def generate_csrf_token():
     session = sessions.get_store().get_session()
@@ -56,37 +55,6 @@ class ViewClass:
     """
     pass
 
-class LocaleStrings (object):
-    """ _s.id      The current locale tag in a form such as: 'en' or 'fr_CA'.
-        _s.this    The current locale as a display string.
-        _s.others  A list of display-string-lists (dsl) for a given curremt locale
-                   One dsl for each locale supported by the app, except the current locale.
-                       eg if current locale is Spanish 'es', a dsl fields could be:
-                                locale id,  locale in current locale,  localized locale ie its own
-                                ['en'    , 'Ingles'                 , 'English'                ]   
-                             or ['en_US' , 'Ingles (Estados Unidos)', 'English (United States)']
-    """        
-    def __init__(_s, handler):     # @NoSelf
-        ctag = handler.locale      # current locale as a string in form: 'aa' or 'aa_AA'  eg: 'en' or 'fr_CA'
-        _s.tag = ctag
-        _s.others = [] 
-        for t in handler.app.config.get ('locales'):
-            loc = Locale.parse (t)
-            if t == ctag:                                                            
-                _s.this = loc.display_name
-            else:
-                _s.others.append( [ t                           # loc described using its tag
-                                  , loc.get_display_name (ctag) # loc described using the current locale
-                                  , loc.display_name            # loc described using the its own locale aka the "localized" locale
-                                  ] ) 
-            
-def getLocaleStrings (handler):
-    ctag = handler.locale
-    ls = memcache.get (ctag)     # requests from a user will generally have same locale so it makes sense to hold this in memcache @UndefinedVariable
-    if ls is None:               # ... and even more so because also many different users will use same locale (memcache is global to the app)
-        ls = LocaleStrings (handler)
-        memcache.add (ctag, ls)  # @UndefinedVariable
-    return ls
 
 class BaseHandler(webapp2.RequestHandler):
     """
@@ -100,7 +68,7 @@ class BaseHandler(webapp2.RequestHandler):
         """ Override the initialiser in order to set the language.
         """
         self.initialize(request, response)
-        self.locale = i18n.set_locale(self)
+        self.localeStrings = i18n.getLocaleStrings(self)
         self.view = ViewClass()
 
     def dispatch(self):
@@ -152,9 +120,9 @@ class BaseHandler(webapp2.RequestHandler):
             'logout_url': self.uri_for('logout')
         }
 
-    @webapp2.cached_property
-    def language(self):
-        return str(Locale.parse(self.locale).language)
+    # @webapp2.cached_property
+    # def language(self):
+        # return str(Locale.parse(self.locale).language)
 
     @webapp2.cached_property
     def user(self):
@@ -228,23 +196,22 @@ class BaseHandler(webapp2.RequestHandler):
 
         return self.request.path + "?" if path_lang == "" else str(self.request.path) + "?" + path_lang
 
-    @property
-    def locales(self):
-        """
-        returns a dict of locale codes to locale display names in both the current locale and the localized locale
-        example: if the current locale is es_ES then locales['en_US'] = 'Ingles (Estados Unidos) - English (United States)'
-        """
-        if not self.app.config.get('locales'):
-            return None
-        locales = {}
-        for l in self.app.config.get('locales'):
-            current_locale = Locale.parse(self.locale)
-            language = current_locale.languages[l.split('_')[0]]
-            territory = current_locale.territories[l.split('_')[1]]
-            localized_locale_name = Locale.parse(l).display_name.capitalize()
-            locales[l] = language.capitalize() + " (" + territory.capitalize() + ") - " + localized_locale_name
-        return locales
-        
+    # @property
+    # def locales(self):
+        # """
+        # returns a dict of locale codes to locale display names in both the current locale and the localized locale
+        # example: if the current locale is es_ES then locales['en_US'] = 'Ingles (Estados Unidos) - English (United States)'
+        # """
+        # if not self.app.config.get('locales'):
+            # return None
+        # locales = {}
+        # for l in self.app.config.get('locales'):
+            # current_locale = Locale.parse(self.locale)
+            # language = current_locale.languages[l.split('_')[0]]
+            # territory = current_locale.territories[l.split('_')[1]]
+            # localized_locale_name = Locale.parse(l).display_name.capitalize()
+            # locales[l] = language.capitalize() + " (" + territory.capitalize() + ") - " + localized_locale_name
+        # return locales
         
     @webapp2.cached_property
     def tz(self):
@@ -304,18 +271,18 @@ class BaseHandler(webapp2.RequestHandler):
         self.base_layout = layout
 
     def render_template(self, filename, **kwargs):
-        locales = self.app.config.get('locales') or []
-        locale_iso = None
-        language = ''
-        territory = ''
-        language_id = self.app.config.get('app_lang')
+        # locales = self.app.config.get('locales') or []
+        # locale_iso = None
+        # language = ''
+        # territory = ''
+        # language_id = self.app.config.get('app_lang')
 
-        if self.locale and len(locales) > 1:
-            locale_iso = Locale.parse(self.locale)
-            language_id = locale_iso.language
-            territory_id = locale_iso.territory
-            language = locale_iso.languages[language_id]
-            territory = locale_iso.territories[territory_id]
+        # if self.locale and len(locales) > 1:
+            # locale_iso = Locale.parse(self.locale)
+            # language_id = locale_iso.language
+            # territory_id = locale_iso.territory
+            # language = locale_iso.languages[language_id]
+            # territory = locale_iso.territories[territory_id]
 
         # make all self.view variables available in jinja2 templates
         if hasattr(self, 'view'):
@@ -333,11 +300,11 @@ class BaseHandler(webapp2.RequestHandler):
             'query_string': self.request.query_string,
             'path_for_language': self.path_for_language,
             'is_mobile': self.is_mobile,
-            'locale_iso': locale_iso, # babel locale object
-            'locale_language': language.capitalize() + " (" + territory.capitalize() + ")", # babel locale object
-            'locale_language_id': language_id, # babel locale object
-            'locales': self.locales,
-            'locale_strings': getLocaleStrings(self),
+           # 'locale_iso': locale_iso, # babel locale object
+           # 'locale_language': language.capitalize() + " (" + territory.capitalize() + ")", # babel locale object
+           # 'locale_language_id': language_id, # babel locale object
+           # 'locales': self.locales,
+            'locale_strings': self.localeStrings,
             'provider_uris': self.provider_uris,
             'provider_info': self.provider_info,
             'enable_federated_login': self.app.config.get('enable_federated_login'),

@@ -1,9 +1,9 @@
 {% import "macros.html" as macros %}
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="{{ locale_language_id }}"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang="{{ locale_language_id }}"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9" lang="{{ locale_language_id }}"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ locale_language_id }}"> <!--<![endif]-->
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="{{ locale_strings.tag }}"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"        lang="{{ locale_strings.tag }}"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"               lang="{{ locale_strings.tag }}"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ locale_strings.tag }}"> <!--<![endif]-->
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -52,18 +52,18 @@
                             <li><a href="https://github.com/coto/gae-boilerplate" target="_blank">
                                 <span class="icon-inbox"></span> {% trans %}Source Code{% endtrans %}</a>
                             </li>
-                            {% if locale_iso %}
+                            {% if locale_strings and len(locale_strings.others) > 0 %}
                                 <li class="dropdown">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                         <span class="icon-globe"></span>
-                                        {% trans %}Language{% endtrans %} : {{ locale_language }} <b class="caret"></b>
+                                        {% trans %}Language{% endtrans %} :- {{ locale_strings.this }} <b class="caret"></b>
                                     </a>
                                     <ul class="dropdown-menu">
-                                        {% for l in locale_strings.others %}
-                                            <li><a href="{{ path_for_language }}&hl={{ l.tag }}">
-                                                <div class="local-native">
-                                                    <p class="local" >{{ l[1] }}</p>
-                                                    <p class="native">{{ l[2] }}</p>
+                                        {% for ls in locale_strings.others %}
+                                            <li><a href="{{ path_for_language }}&hl={{ ls[locale_strings.Tag] }}">
+                                                <div class="foreign-native">
+                                                    <p class="foreign">{{ ls[locale_strings.Foreign] }}</p>
+                                                    <p class="native" >{{ ls[locale_strings.Native] }}</p>
                                                 </div>
                                             </a></li>
                                         {% endfor %}
@@ -208,12 +208,8 @@
 <script src="/boilerplate/js/plugins.js"></script>
 <script src="/boilerplate/js/script.js"></script>
 <script src="/js/script.js"></script>
-{% if locale_language_id != "en" %}
-    {% if locale_iso.language == "pt" and locale_iso.territory == "BR" %}
-        <script src="/boilerplate/js/libs/jquery_validation/localization/messages_{{ locale_iso.language }}_{{ locale_iso.territory }}.js"></script>
-    {% else %}
-        <script src="/boilerplate/js/libs/jquery_validation/localization/messages_{{ locale_language_id }}.js"></script>
-    {% endif %}
+{% if not locale_strings.tag.startswith("en") %}
+    <script src="/boilerplate/js/libs/jquery_validation/localization/messages_{{ locale_strings.tag }}.js"></script>
 {% endif %}
 {% block mediaJS %}{% endblock %}
 <!-- end scripts -->

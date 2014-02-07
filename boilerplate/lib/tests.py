@@ -45,10 +45,10 @@ class I18nTest(unittest.TestCase):
     def test_disable_i18n(self):
         self.app.config['locales'] = []
         locale = i18n.set_locale(self)
-        self.assertEqual(locale, None)
+        self.assertEqual(locale, 'en')
         self.app.config['locales'] = None 
         locale = i18n.set_locale(self)
-        self.assertEqual(locale, None)
+        self.assertEqual(locale, 'en')
         
 
         
