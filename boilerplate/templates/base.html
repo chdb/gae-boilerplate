@@ -52,7 +52,7 @@
                             <li><a href="https://github.com/coto/gae-boilerplate" target="_blank">
                                 <span class="icon-inbox"></span> {% trans %}Source Code{% endtrans %}</a>
                             </li>
-                            {% if locale_strings and len(locale_strings.others) > 0 %}
+                            {% if locale_strings.enabled %}
                                 <li class="dropdown">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                         <span class="icon-globe"></span>
@@ -60,7 +60,7 @@
                                     </a>
                                     <ul class="dropdown-menu">
                                         {% for ls in locale_strings.others %}
-                                            <li><a href="{{ path_for_language }}&hl={{ ls[locale_strings.Tag] }}">
+                                            <li><a href="{{ path_qs }}&hl={{ ls[locale_strings.Tag] }}">
                                                 <div class="foreign-native">
                                                     <p class="foreign">{{ ls[locale_strings.Foreign] }}</p>
                                                     <p class="native" >{{ ls[locale_strings.Native] }}</p>

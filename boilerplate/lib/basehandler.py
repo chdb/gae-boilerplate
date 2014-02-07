@@ -68,7 +68,6 @@ class BaseHandler(webapp2.RequestHandler):
         """ Override the initialiser in order to set the language.
         """
         self.initialize(request, response)
-        self.localeStrings = i18n.getLocaleStrings(self)
         self.view = ViewClass()
 
     def dispatch(self):
@@ -120,10 +119,6 @@ class BaseHandler(webapp2.RequestHandler):
             'logout_url': self.uri_for('logout')
         }
 
-    # @webapp2.cached_property
-    # def language(self):
-        # return str(Locale.parse(self.locale).language)
-
     @webapp2.cached_property
     def user(self):
         return self.auth.get_user_by_session()
@@ -150,7 +145,7 @@ class BaseHandler(webapp2.RequestHandler):
                 else:
                     return str(user_info.username)
             except AttributeError, e:
-                # avoid AttributeError when the session was delete from the server
+                # avoid AttributeError when the session was deleted from the server
                 logging.error(e)
                 self.auth.unset_session()
                 self.redirect_to('home')
@@ -163,7 +158,7 @@ class BaseHandler(webapp2.RequestHandler):
                 user_info = models.User.get_by_id(long(self.user_id))
                 return user_info.email
             except AttributeError, e:
-                # avoid AttributeError when the session was delete from the server
+                # avoid AttributeError when the session was deleted from the server
                 logging.error(e)
                 self.auth.unset_session()
                 self.redirect_to('home')
@@ -184,34 +179,6 @@ class BaseHandler(webapp2.RequestHandler):
     @webapp2.cached_property
     def provider_info(self):
         return models.SocialUser.PROVIDERS_INFO
-
-    @webapp2.cached_property
-    def path_for_language(self):
-        """
-        Get the current path + query_string without language parameter (hl=something)
-        Useful to put it on a template to concatenate with '&hl=NEW_LOCALE'
-        Example: .../?hl=en_US
-        """
-        path_lang = re.sub(r'(^hl=(\w{5})\&*)|(\&hl=(\w{5})\&*?)', '', str(self.request.query_string))
-
-        return self.request.path + "?" if path_lang == "" else str(self.request.path) + "?" + path_lang
-
-    # @property
-    # def locales(self):
-        # """
-        # returns a dict of locale codes to locale display names in both the current locale and the localized locale
-        # example: if the current locale is es_ES then locales['en_US'] = 'Ingles (Estados Unidos) - English (United States)'
-        # """
-        # if not self.app.config.get('locales'):
-            # return None
-        # locales = {}
-        # for l in self.app.config.get('locales'):
-            # current_locale = Locale.parse(self.locale)
-            # language = current_locale.languages[l.split('_')[0]]
-            # territory = current_locale.territories[l.split('_')[1]]
-            # localized_locale_name = Locale.parse(l).display_name.capitalize()
-            # locales[l] = language.capitalize() + " (" + territory.capitalize() + ") - " + localized_locale_name
-        # return locales
         
     @webapp2.cached_property
     def tz(self):
@@ -271,42 +238,30 @@ class BaseHandler(webapp2.RequestHandler):
         self.base_layout = layout
 
     def render_template(self, filename, **kwargs):
-        # locales = self.app.config.get('locales') or []
-        # locale_iso = None
-        # language = ''
-        # territory = ''
-        # language_id = self.app.config.get('app_lang')
 
-        # if self.locale and len(locales) > 1:
-            # locale_iso = Locale.parse(self.locale)
-            # language_id = locale_iso.language
-            # territory_id = locale_iso.territory
-            # language = locale_iso.languages[language_id]
-            # territory = locale_iso.territories[territory_id]
-
+        localeStrings = i18n.getLocaleStrings(self) # getLocaleStrings() must be called before setting path_qs
+        path_qs = self.request.path_qs
+        if len(self.request.GET) == 0:
+            path_qs = path_qs + "?"
+            
         # make all self.view variables available in jinja2 templates
         if hasattr(self, 'view'):
             kwargs.update(self.view.__dict__)
-
+        
         # set or overwrite special vars for jinja templates
         kwargs.update({
             'google_analytics_code': self.app.config.get('google_analytics_code'),
             'app_name': self.app.config.get('app_name'),
-            'user_id': self.user_id,
+            'user_id':  self.user_id,
             'username': self.username,
-            'email': self.email,
-            'url': self.request.url,
-            'path': self.request.path,
-            'query_string': self.request.query_string,
-            'path_for_language': self.path_for_language,
+            'email':    self.email,
+            'url':      self.request.url,
+            'path':     self.request.path,
+            'path_qs':  path_qs, 
             'is_mobile': self.is_mobile,
-           # 'locale_iso': locale_iso, # babel locale object
-           # 'locale_language': language.capitalize() + " (" + territory.capitalize() + ")", # babel locale object
-           # 'locale_language_id': language_id, # babel locale object
-           # 'locales': self.locales,
-            'locale_strings': self.localeStrings,
-            'provider_uris': self.provider_uris,
-            'provider_info': self.provider_info,
+            'locale_strings': localeStrings,
+            'provider_uris':  self.provider_uris,
+            'provider_info':  self.provider_info,
             'enable_federated_login': self.app.config.get('enable_federated_login'),
             'base_layout': self.get_base_layout
         })

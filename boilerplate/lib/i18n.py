@@ -108,7 +108,7 @@ def set_locale(rh, force=None):
     tag = force
     if tag not in locales:
         # 2. retrieve locale tag from url query string
-        tag = rh.request.get("hl", None)
+        qs = tag = rh.request.get("hl", None)
         if tag not in locales:
             # 3. retrieve locale tag from cookie
             tag = rh.request.cookies.get('hl', None)
@@ -121,7 +121,12 @@ def set_locale(rh, force=None):
                     tag = str(Locale.negotiate(territory, locales))
                     if tag not in locales:
                         # 6. use default locale ie the 1st member of locales
-                        tag = locales[0] 
+                        tag = locales[0]
+    assert tag
+    if qs:
+        qs_items = rh.request.GET
+        del qs_items['hl']  # the hl item has been processed 
+        
     i18n.get_i18n().set_locale(tag)
     # save locale tag in cookie with 26 weeks expiration (in seconds)
     rh.response.set_cookie('hl', tag, max_age = 15724800)
@@ -143,17 +148,20 @@ class LocaleStrings (object):
     Native  = 2
     
     def __init__(_s, ctag, locale_tags):     # @NoSelf
+        
+        _s.enabled = locale_tags and len(locale_tags) > 1
         _s.tag = ctag
         _s.others = []
-        for lt in locale_tags:
-            loc = Locale.parse (lt)
-            if lt == ctag:                                                            
-                _s.this = loc.display_name
-            else:
-                _s.others.append( [ lt                          # loc described using its tag
-                                  , loc.get_display_name (ctag) # loc described using the current locale
-                                  , loc.display_name            # loc described using the its own locale aka the "localized" locale
-                                  ] ) 
+        if _s.enabled:
+            for lt in locale_tags:
+                loc = Locale.parse (lt)
+                if lt == ctag:                                                            
+                    _s.this = loc.display_name
+                else:
+                    _s.others.append( [ lt                          # loc described using its tag
+                                      , loc.get_display_name (ctag) # loc described using the current locale
+                                      , loc.display_name            # loc described using the its own locale aka the "localized" locale
+                                      ] ) 
             
 def getLocaleStrings (handler):
     ctag = set_locale (handler)  # current locale as a string in form: 'aa' or 'aa_AA'  eg: 'en' or 'fr_CA'
