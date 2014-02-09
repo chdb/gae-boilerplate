@@ -97,10 +97,10 @@ class AdminUserEditHandler(BaseHandler):
             if self.form.validate():
                 self.form.populate_obj(user)
                 user.put()
-                self.add_message("Changes saved!", 'success')
+                self.flash('success', "Changes saved!")
                 return self.redirect_to("admin-user-edit", user_id=user_id)
             else:
-                self.add_message("Could not save changes!", 'error')
+                self.flash('error', "Could not save changes!")
         else:
             user = self.get_or_404(user_id)
             self.form.process(obj=user)

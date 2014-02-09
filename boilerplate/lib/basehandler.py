@@ -69,6 +69,7 @@ class BaseHandler(webapp2.RequestHandler):
         """
         self.initialize(request, response)
         self.view = ViewClass()
+        self.localeStrings = i18n.getLocaleStrings(self) # getLocaleStrings() must be called before setting path_qs in render_template()
 
     def dispatch(self):
         """
@@ -76,8 +77,7 @@ class BaseHandler(webapp2.RequestHandler):
         """
         self.session_store = sessions.get_store(request=self.request)
 
-        try:
-            # csrf protection
+        try:# csrf protection
             if self.request.method == "POST" and not self.request.path.startswith('/taskqueue'):
                 token = self.session.get('_csrf_token')
                 if not token or token != self.request.get('_csrf_token'):
@@ -89,8 +89,20 @@ class BaseHandler(webapp2.RequestHandler):
             # Save all sessions.
             self.session_store.save_sessions(self.response)
 
+    def log_visit(_s, ukey):
+        if _s.app.config['log_visit']:
+            try:
+                logVisit = models.LogVisit ( user=ukey
+                                           , uastring=_s.request.user_agent
+                                           , ip=_s.request.remote_addr
+                                           , timestamp=utils.get_date_time()
+                                           )
+                logVisit.put()
+            except (apiproxy_errors.OverQuotaError, BadValueError):
+                logging.error("Error saving Visit Log in datastore")
+
     @webapp2.cached_property
-    def auth(self):
+    def auth(_s):
         return auth.get_auth()
 
     @webapp2.cached_property
@@ -102,22 +114,16 @@ class BaseHandler(webapp2.RequestHandler):
         # Returns a session using the default cookie key.
         return self.session_store.get_session()
 
-    @webapp2.cached_property
-    def messages(self):
-        return self.session.get_flashes(key='_messages')
-
-    def add_message(self, message, level=None):
-        self.session.add_flash(message, level, key='_messages')
+    def flash(_s, level, message):
+        _s.session.add_flash(message, level, key='_messages')
 
     @webapp2.cached_property
-    def auth_config(self):
+    def auth_config(_s):
+        """ Dict to hold urls for login/logout
         """
-              Dict to hold urls for login/logout
-        """
-        return {
-            'login_url': self.uri_for('login'),
-            'logout_url': self.uri_for('logout')
-        }
+        return  { 'login_url' : _s.uri_for('login')
+                , 'logout_url': _s.uri_for('logout')
+                }
 
     @webapp2.cached_property
     def user(self):
@@ -196,7 +202,7 @@ class BaseHandler(webapp2.RequestHandler):
 
     @webapp2.cached_property
     def countries(self):
-        return Locale.parse(self.locale).territories
+        return Locale.parse(self.localeStrings.tag).territories
 
     @webapp2.cached_property
     def countries_tuple(self):
@@ -239,10 +245,11 @@ class BaseHandler(webapp2.RequestHandler):
 
     def render_template(self, filename, **kwargs):
 
-        localeStrings = i18n.getLocaleStrings(self) # getLocaleStrings() must be called before setting path_qs
         path_qs = self.request.path_qs
         if len(self.request.GET) == 0:
             path_qs = path_qs + "?"
+        #ToDo: Why cant we just pass back request.path + '?' ?
+        # why do we need to pass back the (remainder of) query string too?
             
         # make all self.view variables available in jinja2 templates
         if hasattr(self, 'view'):
@@ -259,7 +266,7 @@ class BaseHandler(webapp2.RequestHandler):
             'path':     self.request.path,
             'path_qs':  path_qs, 
             'is_mobile': self.is_mobile,
-            'locale_strings': localeStrings,
+            'locale_strings': self.localeStrings,
             'provider_uris':  self.provider_uris,
             'provider_info':  self.provider_info,
             'enable_federated_login': self.app.config.get('enable_federated_login'),
@@ -268,8 +275,10 @@ class BaseHandler(webapp2.RequestHandler):
         kwargs.update(self.auth_config)
         if hasattr(self, 'form'):
             kwargs['form'] = self.form
-        if self.messages:
-            kwargs['messages'] = self.messages
+        
+        flashMessages = self.session.get_flashes(key='_messages')
+        if flashMessages:
+            kwargs['messages'] = flashMessages
 
         self.response.headers.add_header('X-UA-Compatible', 'IE=Edge,chrome=1')
         self.response.write(self.jinja2.render_template(filename, **kwargs))
