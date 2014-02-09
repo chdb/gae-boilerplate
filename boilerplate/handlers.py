@@ -207,18 +207,7 @@ class LoginHandler(BaseHandler):
                     social_user.put()
 
             # end linkedin
-
-            if self.app.config['log_visit']:
-                try:
-                    logVisit = models.LogVisit(
-                        user=user.key,
-                        uastring=self.request.user_agent,
-                        ip=self.request.remote_addr,
-                        timestamp=utils.get_date_time()
-                    )
-                    logVisit.put()
-                except (apiproxy_errors.OverQuotaError, BadValueError):
-                    logging.error("Error saving Visit Log in datastore")
+            self.logVisit(user.key)
             if continue_url:
                 self.redirect(continue_url)
             else:
@@ -337,17 +326,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     # Social user exists. Need authenticate related site account
                     user = social_user.user.get()
                     self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-                    if self.app.config['log_visit']:
-                        try:
-                            logVisit = models.LogVisit(
-                                user=user.key,
-                                uastring=self.request.user_agent,
-                                ip=self.request.remote_addr,
-                                timestamp=utils.get_date_time()
-                            )
-                            logVisit.put()
-                        except (apiproxy_errors.OverQuotaError, BadValueError):
-                            logging.error("Error saving Visit Log in datastore")
+                    self.logVisit(user.key)
                     if continue_url:
                         self.redirect(continue_url)
                     else:
@@ -396,17 +375,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     # Social user exists. Need authenticate related site account
                     user = social_user.user.get()
                     self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-                    if self.app.config['log_visit']:
-                        try:
-                            logVisit = models.LogVisit(
-                                user=user.key,
-                                uastring=self.request.user_agent,
-                                ip=self.request.remote_addr,
-                                timestamp=utils.get_date_time()
-                            )
-                            logVisit.put()
-                        except (apiproxy_errors.OverQuotaError, BadValueError):
-                            logging.error("Error saving Visit Log in datastore")
+                    self.logVisit(user.key)
                     self.redirect_to('home')
                 else:
                     uid = str(user_data['id'])
@@ -451,17 +420,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     # Social user exists. Need authenticate related site account
                     user = social_user.user.get()
                     self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-                    if self.app.config['log_visit']:
-                        try:
-                            logVisit = models.LogVisit(
-                                user=user.key,
-                                uastring=self.request.user_agent,
-                                ip=self.request.remote_addr,
-                                timestamp=utils.get_date_time()
-                            )
-                            logVisit.put()
-                        except (apiproxy_errors.OverQuotaError, BadValueError):
-                            logging.error("Error saving Visit Log in datastore")
+                    self.logVisit(user.key)
                     if continue_url:
                         self.redirect(continue_url)
                     else:
@@ -519,17 +478,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     # Social user exists. Need authenticate related site account
                     user = social_user.user.get()
                     self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-                    if self.app.config['log_visit']:
-                        try:
-                            logVisit = models.LogVisit(
-                                user=user.key,
-                                uastring=self.request.user_agent,
-                                ip=self.request.remote_addr,
-                                timestamp=utils.get_date_time()
-                            )
-                            logVisit.put()
-                        except (apiproxy_errors.OverQuotaError, BadValueError):
-                            logging.error("Error saving Visit Log in datastore")
+                    self.logVisit(user.key)
                     if continue_url:
                         self.redirect(continue_url)
                     else:
@@ -572,7 +521,8 @@ class CallbackSocialLoginHandler(BaseHandler):
                     
                     self.flash('success', _('%s association successfully added.') % provider_display_name)
                 else:
-                    self.flash('error', _('This %s account is already in use.') % provider_display_name)
+                    self.flash('error', _('This %s 
+                    in use.') % provider_display_name)
                 if continue_url:
                     self.redirect(continue_url)
                 else:
@@ -584,17 +534,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     # Social user found. Authenticate the user
                     user = social_user.user.get()
                     self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-                    if self.app.config['log_visit']:
-                        try:
-                            logVisit = models.LogVisit(
-                                user=user.key,
-                                uastring=self.request.user_agent,
-                                ip=self.request.remote_addr,
-                                timestamp=utils.get_date_time()
-                            )
-                            logVisit.put()
-                        except (apiproxy_errors.OverQuotaError, BadValueError):
-                            logging.error("Error saving Visit Log in datastore")
+                    self.logVisit(user.key)
                     if continue_url:
                         self.redirect(continue_url)
                     else:
@@ -645,18 +585,7 @@ class CallbackSocialLoginHandler(BaseHandler):
             social_user.put()
             # authenticate user
             self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-            if self.app.config['log_visit']:
-                try:
-                    logVisit = models.LogVisit(
-                        user=user.key,
-                        uastring=self.request.user_agent,
-                        ip=self.request.remote_addr,
-                        timestamp=utils.get_date_time()
-                    )
-                    logVisit.put()
-                except (apiproxy_errors.OverQuotaError, BadValueError):
-                    logging.error("Error saving Visit Log in datastore")
-
+            self.logVisit(user.key)
             self.flash('success', _('Welcome!  You have been registered as a new user and logged in through %s.')
                                           % provider_display_name)
         else:
@@ -696,7 +625,7 @@ class LogoutHandler(BaseHandler):
 
     def get(self):
         if self.user:
-            self.flash('info', _("You've signed out successfully. Warning: Please clear all cookies and logout of OpenID providers too if you logged in on a public computer."))
+            self.flash('warning', _("You've signed out successfully. Warning: if you are using a public computer, please clear all cookies and also remember to logout from all Social Media applications too."))
 
         self.auth.unset_session()
         # User is logged out, let's try redirecting to login page

@@ -89,7 +89,7 @@ class BaseHandler(webapp2.RequestHandler):
             # Save all sessions.
             self.session_store.save_sessions(self.response)
 
-    def log_visit(_s, ukey):
+    def logVisit(_s, ukey):
         if _s.app.config['log_visit']:
             try:
                 logVisit = models.LogVisit ( user=ukey
