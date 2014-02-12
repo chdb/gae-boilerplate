@@ -521,8 +521,7 @@ class CallbackSocialLoginHandler(BaseHandler):
                     
                     self.flash('success', _('%s association successfully added.') % provider_display_name)
                 else:
-                    self.flash('error', _('This %s 
-                    in use.') % provider_display_name)
+                    self.flash('error', _('This %s account is already in use.') % provider_display_name)
                 if continue_url:
                     self.redirect(continue_url)
                 else:
