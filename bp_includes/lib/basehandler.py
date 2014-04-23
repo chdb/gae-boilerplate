@@ -85,6 +85,7 @@ class BaseHandler(webapp2.RequestHandler):
         return self.auth.store.user_model
 
     @webapp2.cached_property
+    def auth(_s):
         return auth.get_auth()
 
     @webapp2.cached_property
@@ -101,6 +102,8 @@ class BaseHandler(webapp2.RequestHandler):
         return os.environ['theme']
 
     @webapp2.cached_property
+    def get_theme(self):
+        return os.environ['theme']
 
     @webapp2.cached_property
     def auth_config(_s):

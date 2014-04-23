@@ -16,8 +16,7 @@ AcceptLang_REPattern = r"([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})?)\s*(;\s*q\s*=\s*((1|
 # group number:          1                  4
 
 def parse_accept_language_header(string, pattern=AcceptLang_REPattern):
-    """                                            
-    Parse a dict from an Accept-Language header string
+    """ Parse a dict from an Accept-Language header string
     (see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html)
     example input: en-US,en;q=0.8,es-es;q=0.5
     example output: {'en_US': 100, 'en': 80, 'es_ES': 50}
@@ -89,8 +88,7 @@ def getRequestLocation(request, field):
 
 
 def get_locale_from_accept_header(request, localeTags):
-    """
-    Detect a locale from request.header 'Accept-Language'
+    """ Detect a locale from request.header 'Accept-Language'
     The locale with the highest quality factor (q) that most nearly matches our config.locales is returned.
     rh: webapp2.RequestHandler
 
@@ -107,12 +105,12 @@ def get_locale_from_accept_header(request, localeTags):
     return str(locale)
 
 def set_locale(rh, tag=None):
-""" Retrieve the locale and set it for the app.
+    """ Retrieve the locale and set it for the app.
         
     rh:     webapp2.RequestHandler
     tag:    a locale tag to set (eg 'en_US') - if not None this is the preferred choice provided its on the list of localeTags
     return: locale tag string
-"""
+    """
     #ToDo: save the locale tag in the User Model and access it below, before cookies.
     # So a logged-in user consistently get his preferred language.
     # (otherwise they get the choice of whoever last used the same browser)
@@ -121,9 +119,9 @@ def set_locale(rh, tag=None):
     # Also preferred language should be on registration form defaulting to current language.
         
     def getLocale(rh, tag):
-    """ Retrieve the locale tag from a prioritized list of sources
-        NB We cannot return None because there has to be a locale - some language or other.
-    """
+        """ Retrieve the locale tag from a prioritized list of sources
+        NB We cannot return None because there has to be a locale - the app has to be some language or other.
+        """
         localeTags = rh.app.config.get('locales')
         if localeTags: 
             # 1. use tag param
@@ -172,21 +170,21 @@ def set_locale(rh, tag=None):
   
     
 class LocaleStrings (object):
-
-""" Once we know the locale language, it makes sense to save the set of locale display strings that are associated with it.
-    _s.enabled Localisation is enabled (ie whether there is a locales list in config with more than 1 member)
-    _s.tag     The current locale in tag form such as: 'en' or 'fr_CA'.
-    _s.this    The current locale as a display string eg: French(Canada).
-    _s.others  A list of display-string-lists (dsl) for a given curremt locale
+    """ Once we know the locale language, it makes sense to save the set of locale display strings that are associated with it.
     
-    there is one dsl for each locale supported by the app, except the current locale.
+    _s.enabled:  Localisation is enabled (ie whether there is a locales list in config with more than 1 member)
+    _s.tag    :  The current locale in tag form such as: 'en' or 'fr_CA'.
+    _s.this   :  The current locale as a display string eg: French(Canada).
+    _s.others :  A list of display-string-lists (dsl) for a given curremt locale
+    
+    There is one dsl for each locale supported by the app, except the current locale.
     A dsl is a list of 3 strings: Tag-string,  Foreign-string (in current locale),  Native-string (localised)
     eg if current locale is Spanish 'es', a dsl fields could be:
               Tag       Foreign                    Native
            -----------------------------------------------------------------
            [ 'en'    , 'Ingles'                 , 'English'                ]   
         or [ 'en_US' , 'Ingles (Estados Unidos)', 'English (United States)']
-"""
+    """
     Tag     = 0 # enum values for easily identifying the list index 
     Foreign = 1
     Native  = 2
@@ -196,6 +194,7 @@ class LocaleStrings (object):
         _s.enabled = locale_tags and len(locale_tags) > 1
         _s.tag = ctag
         _s.others = []
+        
         if _s.enabled:
             for lt in locale_tags:
                 loc = Locale.parse (lt)
