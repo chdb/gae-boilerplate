@@ -190,13 +190,16 @@ class BaseHandler(webapp2.RequestHandler):
 
     @webapp2.cached_property
     def countries(self):
-        return Locale.parse(self.localeStrings.tag).territories
+         cs = Locale.parse(self.localeStrings.tag).territories
+         for c in cs:
+            if c.isdigit():
+                del cs[c]
+                logging.info ("del %s" % str(c))
+         return cs
 
     @webapp2.cached_property
     def countries_tuple(self):
         countries = self.countries
-        if "001" in countries:
-            del (countries["001"])
         countries = [(key, countries[key]) for key in countries]
         countries.append(("", ""))
         countries.sort(key=lambda tup: tup[1])
