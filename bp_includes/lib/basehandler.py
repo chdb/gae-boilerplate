@@ -194,7 +194,6 @@ class BaseHandler(webapp2.RequestHandler):
          for c in cs:
             if c.isdigit():
                 del cs[c]
-                logging.info ("del %s" % str(c))
          return cs
 
     @webapp2.cached_property
