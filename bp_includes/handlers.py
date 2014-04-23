@@ -42,7 +42,8 @@ class LoginRequiredHandler(BaseHandler):
 
 
 class RegisterBaseHandler(BaseHandler):
-    """ Base class for handlers with registration and login forms.
+    """
+    Base class for handlers with registration and login forms.
     """
 
     @webapp2.cached_property
@@ -51,8 +52,9 @@ class RegisterBaseHandler(BaseHandler):
 
 
 class SendEmailHandler(BaseHandler):
-    """ Core Handler for sending Emails
-        Use with TaskQueue
+    """
+    Core Handler for sending Emails
+    Use with TaskQueue
     """
 
     @taskqueue_method
@@ -120,7 +122,7 @@ class LoginHandler(BaseHandler):
         username = self.form.username.data.lower()
         continue_url = self.request.get('continue_url').encode('ascii', 'ignore')
 
-         try:
+        try:
             if utils.is_email_valid(username):
                 user = self.user_model.get_by_email(username)
                 if user:
@@ -280,7 +282,8 @@ class SocialLoginHandler(BaseHandler):
 
 
 class CallbackSocialLoginHandler(BaseHandler):
-    """ Callback (Save Information) for Social Authentication
+    """
+    Callback (Save Information) for Social Authentication
     """
 
     def get(self, provider_name):
@@ -592,7 +595,8 @@ class CallbackSocialLoginHandler(BaseHandler):
 
 
 class DeleteSocialProviderHandler(BaseHandler):
-    """ Delete Social association with an account
+    """
+    Delete Social association with an account
     """
 
     @user_required
@@ -613,7 +617,8 @@ class DeleteSocialProviderHandler(BaseHandler):
 
 
 class LogoutHandler(BaseHandler):
-    """ Destroy user session and redirect to login
+    """
+    Destroy user session and redirect to login
     """
 
     def get(self):
@@ -631,7 +636,8 @@ class LogoutHandler(BaseHandler):
 
 
 class RegisterHandler(BaseHandler):
-    """ Handler for Sign Up Users
+    """
+    Handler for Sign Up Users
     """
 
     def get(self):
@@ -766,12 +772,13 @@ class RegisterHandler(BaseHandler):
 
 
 class AccountActivationHandler(BaseHandler):
-    """ Handler for account activation
+    """
+    Handler for account activation
     """
 
     def get(self, user_id, token):
         try:
-            if not self.user_model.User.validate_auth_token(user_id, token):
+            if not self.user_model.validate_auth_token(user_id, token):
                 self.flash('error', _('The link is invalid.'))
                 return self.redirect_to('home')
 
@@ -805,6 +812,7 @@ class ResendActivationEmailHandler(BaseHandler):
         try:
             if not self.user_model.validate_resend_token(user_id, token):
                 self.flash('error', _('The link is invalid.'))
+                return self.redirect_to('home')
 
             user = self.user_model.get_by_id(long(user_id))
             email = user.email
@@ -849,98 +857,9 @@ class ResendActivationEmailHandler(BaseHandler):
             return self.redirect_to('home')
 
 
-<<<<<<< HEAD:boilerplate/handlers.py
-class ContactHandler(BaseHandler):
-    """
-    Handler for Contact Form
-    """
-
-    def get(self):
-        """ Returns a simple HTML for contact form """
-
-        if self.user:
-            user_info = models.User.get_by_id(long(self.user_id))
-            if user_info.name or user_info.last_name:
-                self.form.name.data = user_info.name + " " + user_info.last_name
-            if user_info.email:
-                self.form.email.data = user_info.email
-        params = {
-            "exception": self.request.get('exception')
-        }
-
-        return self.render_template('contact.html', **params)
-
-    def post(self):
-        """ validate contact form """
-
-        if not self.form.validate():
-            return self.get()
-        remoteip = self.request.remote_addr
-        user_agent = self.request.user_agent
-        exception = self.request.POST.get('exception')
-        name = self.form.name.data.strip()
-        email = self.form.email.data.lower()
-        message = self.form.message.data.strip()
-
-        try:
-            # parsing user_agent and getting which os key to use
-            # windows uses 'os' while other os use 'flavor'
-            ua = httpagentparser.detect(user_agent)
-            _os = ua.has_key('flavor') and 'flavor' or 'os'
-
-            operating_system = str(ua[_os]['name']) if "name" in ua[_os] else "-"
-            if 'version' in ua[_os]:
-                operating_system += ' ' + str(ua[_os]['version'])
-            if 'dist' in ua:
-                operating_system += ' ' + str(ua['dist'])
-
-            browser = str(ua['browser']['name']) if 'browser' in ua else "-"
-            browser_version = str(ua['browser']['version']) if 'browser' in ua else "-"
-
-            template_val = {
-                "name": name,
-                "email": email,
-                "browser": browser,
-                "browser_version": browser_version,
-                "operating_system": operating_system,
-                "ip": remoteip,
-                "message": message
-            }
-        except Exception as e:
-            logging.error("error getting user agent info: %s" % e)
-
-        try:
             subject = _("Contact: %s") % self.app.config.get('app_name')
-            # exceptions for error pages that redirect to contact
-            if exception != "":
-                subject = subject + " (Exception error: %s)" % exception
-
-            body_path = "emails/contact.txt"
-            body = self.jinja2.render_template(body_path, **template_val)
-
-            email_url = self.uri_for('taskqueue-send-email')
-            taskqueue.add(url=email_url, params={
-                'to': self.app.config.get('contact_recipient'),
-                'subject': subject,
-                'body': body,
-                'sender': self.app.config.get('contact_sender'),
-            })
-
             self.flash('success', _('Your message was sent successfully.'))
-            return self.redirect_to('contact')
-
-        except (AttributeError, KeyError), e:
-            logging.error('Error sending contact form: %s' % e)
             self.flash('error', _('Error sending the message. Please try again later.'))
-            return self.redirect_to('contact')
-
-    @webapp2.cached_property
-    def form(self):
-        return forms.ContactForm(self)
-
-
-=======
->>>>>>> upstream/master:bp_includes/handlers.py
 class EditProfileHandler(BaseHandler):
     """
     Handler for Edit User Profile
@@ -1024,13 +943,8 @@ class EditProfileHandler(BaseHandler):
                 return self.get()
 
         except (AttributeError, TypeError), e:
-<<<<<<< HEAD:boilerplate/handlers.py
-            login_error_message = _('Sorry you are not logged in.')
-            self.flash('error', login_error_message)
-=======
             login_error_message = _('Your session has expired.')
-            self.add_message(login_error_message, 'error')
->>>>>>> upstream/master:bp_includes/handlers.py
+            self.flash('error', login_error_message)
             self.redirect_to('login')
 
     @webapp2.cached_property
@@ -1105,12 +1019,7 @@ class EditPasswordHandler(BaseHandler):
                 self.flash('error', _("Incorrect password! Please enter your current password to change your account settings."))
                 return self.redirect_to('edit-password')
         except (AttributeError, TypeError), e:
-<<<<<<< HEAD:boilerplate/handlers.py
             self.flash('error', _('Sorry you are not logged in.'))
-=======
-            login_error_message = _('Your session has expired.')
-            self.add_message(login_error_message, 'error')
->>>>>>> upstream/master:bp_includes/handlers.py
             self.redirect_to('login')
 
     @webapp2.cached_property
@@ -1162,13 +1071,8 @@ class EditEmailHandler(BaseHandler):
                         return self.redirect_to("edit-email")
 
                     # send email
-<<<<<<< HEAD:boilerplate/handlers.py
                     subject = _("%s Email Changed Notification") % self.app.config.get('app_name')
-                    user_token = models.User.create_auth_token(self.user_id)
-=======
-                    subject = _("%s Email Changed Notification" % self.app.config.get('app_name'))
                     user_token = self.user_model.create_auth_token(self.user_id)
->>>>>>> upstream/master:bp_includes/handlers.py
                     confirmation_url = self.uri_for("email-changed-check",
                                                     user_id=user_info.get_id(),
                                                     encoded_email=utils.encode(new_email),
@@ -1219,12 +1123,7 @@ class EditEmailHandler(BaseHandler):
                 return self.redirect_to('edit-email')
 
         except (AttributeError, TypeError), e:
-<<<<<<< HEAD:boilerplate/handlers.py
             self.flash('error', _('Sorry, you are not logged in.'))
-=======
-            login_error_message = _('Your session has expired.')
-            self.add_message(login_error_message, 'error')
->>>>>>> upstream/master:bp_includes/handlers.py
             self.redirect_to('login')
 
     @webapp2.cached_property
@@ -1277,21 +1176,12 @@ class PasswordResetHandler(BaseHandler):
         #check if we got an email or username
         email_or_username = str(self.request.POST.get('email_or_username')).lower().strip()
         if utils.is_email_valid(email_or_username):
-<<<<<<< HEAD:boilerplate/handlers.py
-            user = models.User.get_by_email(email_or_username)
+            user = self.user_model.get_by_email(email_or_username)
             _message = _("You entered the email address: <strong>%s</strong> ") % email_or_username
         else:
             auth_id = "own:%s" % email_or_username
-            user = models.User.get_by_auth_id(auth_id)
-            _message = _("You entered the username: <strong>%s</strong> ") % email_or_username
-=======
-            user = self.user_model.get_by_email(email_or_username)
-            _message = _("If the email address you entered") + " (<strong>%s</strong>) " % email_or_username
-        else:
-            auth_id = "own:%s" % email_or_username
             user = self.user_model.get_by_auth_id(auth_id)
-            _message = _("If the username you entered") + " (<strong>%s</strong>) " % email_or_username
->>>>>>> upstream/master:bp_includes/handlers.py
+            _message = _("You entered the username: <strong>%s</strong> ") % email_or_username
 
         _message = _message + _("If that is associated with an account in our records, you will receive an email from us with instructions for resetting your password. "
                                 "<br>If you don't receive instructions within a minute or two, please check spam and junk filters on your email system , or "

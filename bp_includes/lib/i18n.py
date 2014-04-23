@@ -1,6 +1,5 @@
 import re
 import logging
-import pytz
 from google.appengine.api.urlfetch_errors import DownloadError
 from google.appengine.api import urlfetch
 from google.appengine.api import memcache
@@ -17,11 +16,12 @@ AcceptLang_REPattern = r"([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})?)\s*(;\s*q\s*=\s*((1|
 # group number:          1                  4
 
 def parse_accept_language_header(string, pattern=AcceptLang_REPattern):
-""" Parse a dict from an Accept-Language header string
+    """                                            
+    Parse a dict from an Accept-Language header string
     (see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html)
     example input: en-US,en;q=0.8,es-es;q=0.5
     example output: {'en_US': 100, 'en': 80, 'es_ES': 50}
-"""
+    """
     res = {}
     if not string: return None
     for match in re.finditer(pattern, string):
@@ -76,16 +76,28 @@ def parse_accept_language_header(string, pattern=AcceptLang_REPattern):
     # return ter
     
 
+def getRequestLocation(request, field):
+    """ :param request: the Request Object
+        :param field:   one of these strings: "Country","City","Region","CityLatLong"
+        :return:        a detail of the location from which the request originated, according to field param as follows:
+                        "Country"   :   the ISO 3166-1 alpha-2 Code of the country
+                        "Region"    :   name of the region of the country. EG If Country is "US" then Region "ca" means California not Canada.  
+                        "City"      :   name of the city 
+                        "CityLatLong":  Lat, Long as a string eg "37.386051,-122.083851"   
+    """
+    return request.headers.get('X-AppEngine-' + field)
+
 
 def get_locale_from_accept_header(request, localeTags):
-""" Detect a locale from request.header 'Accept-Language'
+    """
+    Detect a locale from request.header 'Accept-Language'
     The locale with the highest quality factor (q) that most nearly matches our config.locales is returned.
     rh: webapp2.RequestHandler
 
     Note that in the future if all User Agents adopt the convention of sorting quality factors in descending order
     then the first can be taken without needing to parse or sort the accept header leading to increased performance.
     (see http://lists.w3.org/Archives/Public/ietf-http-wg/2012AprJun/0473.html)
-"""
+    """
     header = request.headers.get("Accept-Language", '')
     parsed = parse_accept_language_header(header)
     if parsed is None:
@@ -94,8 +106,6 @@ def get_locale_from_accept_header(request, localeTags):
     locale = Locale.negotiate([lang for (lang, q) in pairs_sorted_by_q], request.app.config.get('locales'), sep='_')
     return str(locale)
 
-    
-    
 def set_locale(rh, tag=None):
 """ Retrieve the locale and set it for the app.
         
@@ -139,7 +149,7 @@ def set_locale(rh, tag=None):
                 return tag
             
             # 5. detect locale tag from IP address location
-            ctry = getRequestLocation(rh, 'Country')
+            ctry = getRequestLocation(rh.request, 'Country')
             if ctry:
                 tag = Locale.negotiate(ctry, localeTags)
                 if tag:
@@ -183,7 +193,7 @@ class LocaleStrings (object):
     
     def __init__(_s, ctag, locale_tags):     # @NoSelf
         
-        _s.enabled = bool(locale_tags)
+        _s.enabled = locale_tags and len(locale_tags) > 1
         _s.tag = ctag
         _s.others = []
         if _s.enabled:
@@ -205,68 +215,3 @@ def getLocaleStrings (handler):
         ls = LocaleStrings (ctag, locale_tags)
         memcache.add (ctag, ls)  # @UndefinedVariable
     return ls
-
-
-def getRequestLocation(request, field):
-""" :param request: the Request Object
-    :param field:   one of these strings: "Country","City","Region","CityLatLong"
-    :return:        a detail of the location from which the request originated, according to field param as follows:
-                    "Country"   :   the ISO 3166-1 alpha-2 Code of the country
-                    "Region"    :   name of the region of the country. EG If Country is "US" then Region "ca" means California not Canada.  
-                    "City"      :   name of the city 
-                    "CityLatLong":  Lat, Long as a string eg "37.386051,-122.083851"   
-"""
-    str = 'X-AppEngine-' + field
-    if str in request.headers:
-        return request.headers[str]  
-    return None
-
-
-# use getRequestLocation(r, s) where s = one of: "Country","City","Region","CityLatLong"
-# instead of the following fns
-
-# def get_country_code(request):
-    # """
-    # Country code based on ISO 3166-1 (http://en.wikipedia.org/wiki/ISO_3166-1)
-    # :param request: Request Object
-    # :return: ISO Code of the country
-    # """
-    # if 'X-AppEngine-Country' in request.headers:
-        # if request.headers['X-AppEngine-Country'] in pytz.country_timezones:
-            # return request.headers['X-AppEngine-Country']
-    # return None
-
-
-# def get_city_code(request):
-    # """
-    # City code based on ISO 3166-1 (http://en.wikipedia.org/wiki/ISO_3166-1)
-    # :param request: Request Object
-    # :return: ISO Code of the City
-    # """
-    # if 'X-AppEngine-City' in request.headers:
-        # return request.headers['X-AppEngine-City']
-    # return None
-
-
-# def get_region_code(request):
-    # """
-    # City code based on ISO 3166-1 (http://en.wikipedia.org/wiki/ISO_3166-1)
-    # :param request: Request Object
-    # :return: ISO Code of the City
-    # """
-    # if 'X-AppEngine-City' in request.headers:
-        # return request.headers['X-AppEngine-Region']
-    # return None
-
-
-# def get_city_lat_long(request):
-    # """
-    # City code based on ISO 3166-1 (http://en.wikipedia.org/wiki/ISO_3166-1)
-    # :param request: Request Object
-    # :return: ISO Code of the City
-    # """
-    # if 'X-AppEngine-City' in request.headers:
-        # return request.headers['X-AppEngine-CityLatLong']
-    # return None
-
-

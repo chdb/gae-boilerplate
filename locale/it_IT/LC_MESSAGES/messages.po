@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-13 00:56+0100\n"
+"POT-Creation-Date: 2014-02-23 22:37-0300\n"
 "PO-Revision-Date: 2012-06-21 01:51-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: it_IT <LL@li.org>\n"
@@ -44,8 +44,7 @@ msgstr ""
 
 msgid ""
 "<a href=\"http://browsehappy.com/\">Upgrade to a different browser</a>\n"
-"    \tor <a href=\"http://www.google.com/chromeframe/?redirect=true\">\n"
-"    \tinstall Google Chrome Frame</a> to experience this site."
+"    \tto experience this site."
 msgstr ""
 
 msgid "Associate account with"
@@ -63,6 +62,9 @@ msgstr "Cambia il tuo email"
 
 msgid "Change your password"
 msgstr "Cambia la tua password"
+
+msgid "Confirm Delete Account"
+msgstr ""
 
 msgid "Confirm Password"
 msgstr "Conferma la Password"
@@ -83,8 +85,17 @@ msgstr "Contattare"
 msgid "Country"
 msgstr "Stato"
 
+msgid "Created"
+msgstr ""
+
+msgid "Current Email"
+msgstr ""
+
 msgid "Current Password"
 msgstr "Password attuale"
+
+msgid "Delete Account"
+msgstr ""
 
 msgid "Don't have an account?"
 msgstr ""
@@ -245,9 +256,6 @@ msgstr "Crea Utente"
 msgid "Social account on %s not found for this user."
 msgstr ""
 
-msgid "Sorry you are not logged in."
-msgstr ""
-
 msgid "Sorry, Some error occurred."
 msgstr ""
 
@@ -276,6 +284,9 @@ msgstr ""
 
 #, python-format
 msgid "The account %s is already in use."
+msgstr ""
+
+msgid "The account has been successfully deleted."
 msgstr ""
 
 #, python-format
@@ -333,6 +344,9 @@ msgstr ""
 msgid "Update Profile"
 msgstr "Modifica Profilo"
 
+msgid "Updated"
+msgstr ""
+
 msgid "User Details"
 msgstr ""
 
@@ -352,6 +366,9 @@ msgid "Username or Email"
 msgstr "Username o Email"
 
 msgid "Users Geolocation"
+msgstr ""
+
+msgid "Visit Site"
 msgstr ""
 
 msgid "Welcome <strong>{}</strong>, you are now logged in."
@@ -397,6 +414,9 @@ msgid "Your message was sent successfully."
 msgstr ""
 
 msgid "Your new username is <strong>{}</strong>"
+msgstr ""
+
+msgid "Your session has expired."
 msgstr ""
 
 msgid ""

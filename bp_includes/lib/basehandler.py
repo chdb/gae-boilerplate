@@ -4,7 +4,7 @@
 import logging
 import re
 import pytz #@UnresolvedImport
-#import os
+import os
 # related third party imports
 import webapp2
 from webapp2_extras import jinja2
@@ -15,35 +15,10 @@ from bp_includes import models
 from bp_includes.lib import utils, i18n, jinja_bootstrap
 from babel import Locale #@UnresolvedImport
 
- 
-def generate_csrf_token():
-    session = sessions.get_store().get_session()
-    if '_csrf_token' not in session:
-        session['_csrf_token'] = utils.random_string()
-    return session['_csrf_token']
-
-
-def jinja2_factory(app):
-    j = jinja2.Jinja2(app)
-    j.environment.filters.update({
-        # Set filters.
-        # ...
-    })
-    j.environment.globals.update({
-        # Set global variables.
-        'csrf_token': generate_csrf_token,
-        'uri_for': webapp2.uri_for,
-        'getattr': getattr,
-    })
-    j.environment.tests.update({
-        # Set test.
-        # ...
-    })
-    return j
-
 
 class ViewClass:
-    """ ViewClass to insert variables into the template.
+    """
+        ViewClass to insert variables into the template.
 
         ViewClass is used in BaseHandler to promote variables automatically that can be used
         in jinja2 templates.
@@ -57,7 +32,9 @@ class ViewClass:
 
 
 class BaseHandler(webapp2.RequestHandler):
-    """ BaseHandler for all requests
+    """
+        BaseHandler for all requests
+
         Holds the auth and session properties so they
         are reachable for all requests
     """
@@ -66,12 +43,12 @@ class BaseHandler(webapp2.RequestHandler):
         """ Override the initialiser in order to set the language.
         """
         self.initialize(request, response)
-        self.locale = i18n.set_locale(self, request)
         self.view = ViewClass()
         self.localeStrings = i18n.getLocaleStrings(self) # getLocaleStrings() must be called before setting path_qs in render_template()
 
     def dispatch(self):
-        """ Get a session store for this request.
+        """
+            Get a session store for this request.
         """
         self.session_store = sessions.get_store(request=self.request)
 
@@ -100,15 +77,15 @@ class BaseHandler(webapp2.RequestHandler):
                 logging.error("Error saving Visit Log in datastore")
 
     @webapp2.cached_property
-    def auth(_s):
-        return auth.get_auth()
-
-    @webapp2.cached_property
     def user_model(self):
-        """ Returns the implementation of the user model.
-            Keep consistency when config['webapp2_extras.auth']['user_model'] is set.
+        """Returns the implementation of the user model.
+
+        Keep consistency when config['webapp2_extras.auth']['user_model'] is set.
         """
         return self.auth.store.user_model
+
+    @webapp2.cached_property
+        return auth.get_auth()
 
     @webapp2.cached_property
     def session_store(self):
@@ -119,16 +96,11 @@ class BaseHandler(webapp2.RequestHandler):
         # Returns a session using the default cookie key.
         return self.session_store.get_session()
 
-    def flash(_s, level, message): # changed name from add_message() and param order
+    def flash(_s, level, message):
         _s.session.add_flash(message, level, key='_messages')
-
-    @webapp2.cached_property
-    def flashes(self): # changed name from messages()
-        return self.session.get_flashes(key='_messages')
-
-    @webapp2.cached_property
-    def get_theme(self):
         return os.environ['theme']
+
+    @webapp2.cached_property
 
     @webapp2.cached_property
     def auth_config(_s):
@@ -244,17 +216,20 @@ class BaseHandler(webapp2.RequestHandler):
 
     @webapp2.cached_property
     def get_base_layout(self):
-        """ Get the current base layout template for jinja2 templating. Uses the variable base_layout set in config
-            or if there is a base_layout defined, use the base_layout.
+        """
+        Get the current base layout template for jinja2 templating. Uses the variable base_layout set in config
+        or if there is a base_layout defined, use the base_layout.
         """
         return self.base_layout if hasattr(self, 'base_layout') else self.app.config.get('base_layout')
 
     def set_base_layout(self, layout):
-        """ Set the base_layout variable, thereby overwriting the default layout template name in config.py.
+        """
+        Set the base_layout variable, thereby overwriting the default layout template name in config.py.
         """
         self.base_layout = layout
 
     def render_template(self, filename, **kwargs):
+
         path_qs = self.request.path_qs
         if len(self.request.GET) == 0:
             path_qs = path_qs + "?"
@@ -269,8 +244,8 @@ class BaseHandler(webapp2.RequestHandler):
         kwargs.update({
             'google_analytics_code': self.app.config.get('google_analytics_code'),
             'app_name': self.app.config.get('app_name'),
-            'user_id':  self.user_id,
             'theme': self.get_theme,
+            'user_id':  self.user_id,
             'username': self.username,
             'email':    self.email,
             'url':      self.request.url,

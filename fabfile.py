@@ -47,7 +47,7 @@ def start(mode="normal"):
 
     """
 
-    if mode == "clear":
+    if mode == "clear" or mode == "clean":
         local("dev_appserver.py ./ --host 0.0.0.0 --port 8002 --clear_datastore=yes")
     else:
         local("dev_appserver.py ./ --host 0.0.0.0 --port 8002")
@@ -79,4 +79,4 @@ def test(os="mac"):
         "mac": "/usr/local/google_appengine",
        }[os]
 
-    local("python testrunner.py {0} ./".format(path))
+    local("theme=default python testrunner.py {0} ./".format(path))
