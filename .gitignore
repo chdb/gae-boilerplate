@@ -41,3 +41,8 @@ node_modules
 
 #back-ups
 *.bak
+
+# merge artifacts
+*.py.orig
+*.py~HEAD
+*.html.orig
