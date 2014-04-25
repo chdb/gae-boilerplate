@@ -189,20 +189,19 @@ class BaseHandler(webapp2.RequestHandler):
         return pytz.timezone('UTC')
 
     @webapp2.cached_property
-    def countries(self):
-         cs = Locale.parse(self.localeStrings.tag).territories
-         for c in cs:
-            if c.isdigit():
-                del cs[c]
-         return cs
-
-    @webapp2.cached_property
     def countries_tuple(self):
-        countries = self.countries
-        countries = [(key, countries[key]) for key in countries]
-        countries.append(("", ""))
-        countries.sort(key=lambda tup: tup[1])
-        return countries
+        # get countries + territories from babel in the language of current locale
+        cdict = Locale.parse(self.localeStrings.tag).territories
+        
+        if 'ZZ' in cdict:
+            del cdict['ZZ'] # Remove 'ZZ' which represents "Unknown Country"
+        # Filter out non-Counties (numerical codes are "UN M.49" administrative regions, not countries)
+        # and convert dictionary to a list of tuples 
+        clist = [(k,v) for k,v in cdict.iteritems() if not k.isdigit() ]
+        
+        clist.append(("",""))
+        clist.sort(key=lambda tup: tup[1]) # sort by name
+        return clist
 
     @webapp2.cached_property
     def current_user(self):
@@ -237,7 +236,7 @@ class BaseHandler(webapp2.RequestHandler):
 
         path_qs = self.request.path_qs
         if len(self.request.GET) == 0:
-            path_qs = path_qs + "?"
+            path_qs += "?"
         #ToDo: Why cant we just pass back request.path + '?' ?
         # why do we need to pass back the (remainder of) query string too?
             
