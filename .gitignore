@@ -46,3 +46,5 @@ node_modules
 *.py.orig
 *.py~HEAD
 *.html.orig
+
+.metadata
