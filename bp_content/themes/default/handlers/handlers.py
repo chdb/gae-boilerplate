@@ -112,14 +112,13 @@ class ContactHandler(BaseHandler):
                 'sender': self.app.config.get('contact_sender'),
             })
 
-            message = _('Your message was sent successfully.')
-            self.add_message(message, 'success')
+            self.flash('success', _('Your message was sent successfully.'))
             return self.redirect_to('contact')
 
         except (AttributeError, KeyError), e:
             logging.error('Error sending contact form: %s' % e)
-            message = _('Error sending the message. Please try again later.')
-            self.add_message(message, 'error')
+            
+            self.flash('error', _('Error sending the message. Please try again later.'))
             return self.redirect_to('contact')
 
     @webapp2.cached_property
@@ -185,20 +184,15 @@ class DeleteAccountHandler(BaseHandler):
             self.app.config.get('captcha_private_key'),
             remote_ip)
 
-        if cResponse.is_valid:
-            # captcha was valid... carry on..nothing to see here
-            pass
-        else:
-            _message = _('Wrong image verification code. Please try again.')
-            self.add_message(_message, 'error')
+        if not cResponse.is_valid:     
+            self.flash('error', _('Wrong image verification code. Please try again.')
             return self.redirect_to('delete-account')
 
         if not self.form.validate() and False:
             return self.get()
+        
         password = self.form.password.data.strip()
-
         try:
-
             user_info = self.user_model.get_by_id(long(self.user_id))
             auth_id = "own:%s" % user_info.username
             password = utils.hashing(password, self.app.config.get('salt'))
@@ -220,23 +214,16 @@ class DeleteAccountHandler(BaseHandler):
                     #TODO: Delete UserToken objects
 
                     self.auth.unset_session()
-
-                    # display successful message
-                    msg = _("The account has been successfully deleted.")
-                    self.add_message(msg, 'success')
+                    msg = self.flash('success', _("The account has been successfully deleted."))
                     return self.redirect_to('home')
 
-
             except (InvalidAuthIdError, InvalidPasswordError), e:
-                # Returns error message to self.response.write in
-                # the BaseHandler.dispatcher
-                message = _("Incorrect password! Please enter your current password to change your account settings.")
-                self.add_message(message, 'error')
+                # Returns error message to self.response.write in the BaseHandler.dispatcher
+                self.flash('error', _("Incorrect password! Please enter your current password to change your account settings."))
             return self.redirect_to('delete-account')
 
         except (AttributeError, TypeError), e:
-            login_error_message = _('Your session has expired.')
-            self.add_message(login_error_message, 'error')
+            self.flash('error', _('Your session has expired.'))
             self.redirect_to('login')
 
     @webapp2.cached_property

@@ -99,8 +99,7 @@ class BaseHandler(webapp2.RequestHandler):
 
     def flash(_s, level, message):
         _s.session.add_flash(message, level, key='_messages')
-        return os.environ['theme']
-
+ 
     @webapp2.cached_property
     def get_theme(self):
         return os.environ['theme']
@@ -194,7 +193,7 @@ class BaseHandler(webapp2.RequestHandler):
         cdict = Locale.parse(self.localeStrings.tag).territories
         
         if 'ZZ' in cdict:
-            del cdict['ZZ'] # Remove 'ZZ' which represents "Unknown Country"
+            del cdict['ZZ'] # Remove 'ZZ' which represents "Unknown or Invalid Region"
         # Filter out non-Counties (numerical codes are "UN M.49" administrative regions, not countries)
         # and convert dictionary to a list of tuples 
         clist = [(k,v) for k,v in cdict.iteritems() if not k.isdigit() ]

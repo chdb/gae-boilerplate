@@ -854,12 +854,8 @@ class ResendActivationEmailHandler(BaseHandler):
         except (KeyError, AttributeError), e:
             logging.error("Error resending activation email: %s" % e)
             self.flash('error', _('Sorry, Some error occurred.'))
-            return self.redirect_to('home')
-
-
-            subject = _("Contact: %s") % self.app.config.get('app_name')
-            self.flash('success', _('Your message was sent successfully.'))
-            self.flash('error', _('Error sending the message. Please try again later.'))
+            return self.redirect_to('home')           
+           
 class EditProfileHandler(BaseHandler):
     """
     Handler for Edit User Profile

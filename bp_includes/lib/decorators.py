@@ -19,12 +19,10 @@ def user_required(handler):
         """
             If handler has no login_url specified invoke a 403 error
         """
-        if self.request.query_string != '':
-            query_string = '?' + self.request.query_string
-        else:
-            query_string = ''
-
-        continue_url = self.request.path_url + query_string
+        continue_url = self.request.path_url
+        qs = self.request.query_string
+        if qs != '':
+            continue_url += '?' + qs
         login_url = self.uri_for('login', **{'continue': continue_url})
 
         try:
@@ -35,7 +33,7 @@ def user_required(handler):
                 except (AttributeError, KeyError), e:
                     self.abort(403)
         except AttributeError, e:
-            # avoid AttributeError when the session was delete from the server
+            # avoid AttributeError when the session was deleted from the server
             logging.error(e)
             self.auth.unset_session()
             self.redirect(login_url)
@@ -49,12 +47,13 @@ def admin_required(handler):
          Decorator for checking if there's a admin user associated
          with the current session.
          Will also fail if there's no session present.
-    """
+    """ # ToDo Is this doc string true? (about failing if no seesion)
 
     def check_admin(self, *args, **kwargs):
         """
             If handler has no login_url specified invoke a 403 error
-        """
+        """ # ToDo Is this doc string true? 
+       
         if not users.is_current_user_admin() and config.get('environment') == "production":
             self.response.write(
                 '<div style="padding-top: 200px; height:178px; width: 500px; color: white; margin: 0 auto; font-size: 52px; text-align: center; background: url(\'http://3.bp.blogspot.com/_d_q1e2dFExM/TNWbWrJJ7xI/AAAAAAAAAjU/JnjBiTSA1xg/s1600/Bank+Vault.jpg\')">Forbidden Access <a style=\'color: white;\' href=\'%s\'>Login</a></div>' %
